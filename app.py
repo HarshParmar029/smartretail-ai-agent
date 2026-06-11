@@ -27,6 +27,18 @@ def get_retail_data(query):
             return response
         
         else:
+            # Try searching by title keyword
+            search_results = list(collection.find(
+                {"title": {"$regex": query, "$options": "i"}},
+                {"_id": 0, "title": 1, "year": 1, "genres": 1}
+            ).limit(5))
+            
+            if search_results:
+                response = f"🔍 Search results for '{query}':\n\n"
+                for item in search_results:
+                    response += f"• {item.get('title','')} ({item.get('year','')}) - {', '.join(item.get('genres', []))}\n"
+                return response
+            
             sample = list(collection.find({}, {"_id": 0, "title": 1, "year": 1, "genres": 1}).limit(5))
             if not sample:
                 return "No data found in MongoDB"
