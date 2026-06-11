@@ -14,12 +14,14 @@ def get_retail_data(query):
     locations = collection.distinct("storeLocation")
     samples = list(collection.find({}, {"_id": 0, "items": 1, "storeLocation": 1}).limit(5))
     
-    response = f"🏪 Store Locations: {', '.join(locations)}\n\n"
-    response += f"📦 Sample Products:\n"
+    response = f"🏪 Store Locations: {', '.join(locations)}\n\n📦 Sample Products:\n"
     for s in samples[:3]:
+        loc = s.get('storeLocation', '')
         if 'items' in s:
             for item in s['items'][:2]:
-                response += f"• {item.get('name', 'Product')} - ${item.get('price', 'N/A')}\n"
+                name = item.get('name', 'Product')
+                price = item.get('price', 'N/A')
+                response += f"• {name} - ${price} @ {loc}\n"
     return response
 
 @app.route("/")
