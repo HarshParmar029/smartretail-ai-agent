@@ -10,19 +10,25 @@ client_mongo = MongoClient(os.getenv("MONGODB_URI"))
 db = client_mongo["sample_supplies"]
 
 def get_retail_data(query):
-    collection = db["sales"]
-    locations = collection.distinct("storeLocation")
-    samples = list(collection.find({}, {"_id": 0, "items": 1, "storeLocation": 1}).limit(5))
-    
-    response = f"🏪 Store Locations: {', '.join(locations)}\n\n📦 Sample Products:\n"
-    for s in samples[:3]:
-        loc = s.get('storeLocation', '')
-        if 'items' in s:
-            for item in s['items'][:2]:
-                name = item.get('name', 'Product')
-                price = item.get('price', 'N/A')
-                response += f"• {name} - ${price} @ {loc}\n"
-    return response
+    try:
+        collection = db["sales"]
+        locations = list(collection.distinct("storeLocation"))
+        samples = list(collection.find({}, {"_id": 0, "items": 1, "storeLocation": 1}).limit(5))
+
+        if not locations:
+            return "No data found in MongoDB"
+
+        response = f"🏪 Store Locations: {', '.join(locations)}\n\n📦 Sample Products:\n"
+        for s in samples[:3]:
+            loc = s.get('storeLocation', '')
+            if 'items' in s:
+                for item in s['items'][:2]:
+                    name = item.get('name', 'Product')
+                    price = item.get('price', 'N/A')
+                    response += f"• {name} - ${price} @ {loc}\n"
+        return response
+    except Exception as e:
+        return f"DB Error: {str(e)}"
 
 @app.route("/")
 def home():
