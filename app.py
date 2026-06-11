@@ -7,25 +7,19 @@ load_dotenv()
 
 app = Flask(__name__)
 client_mongo = MongoClient(os.getenv("MONGODB_URI"))
-db = client_mongo["sample_supplies"]
+db = client_mongo["sample_mflix"]
 
 def get_retail_data(query):
     try:
-        collection = db["sales"]
-        locations = list(collection.distinct("storeLocation"))
-        samples = list(collection.find({}, {"_id": 0, "items": 1, "storeLocation": 1}).limit(5))
+        collection = db["movies"]
+        sample = list(collection.find({}, {"_id": 0, "title": 1, "year": 1, "genres": 1}).limit(5))
 
-        if not locations:
+        if not sample:
             return "No data found in MongoDB"
 
-        response = f"🏪 Store Locations: {', '.join(locations)}\n\n📦 Sample Products:\n"
-        for s in samples[:3]:
-            loc = s.get('storeLocation', '')
-            if 'items' in s:
-                for item in s['items'][:2]:
-                    name = item.get('name', 'Product')
-                    price = item.get('price', 'N/A')
-                    response += f"• {name} - ${price} @ {loc}\n"
+        response = "🎬 Sample Data from MongoDB:\n\n"
+        for item in sample:
+            response += f"• {item.get('title','')} ({item.get('year','')}) - {', '.join(item.get('genres', []))}\n"
         return response
     except Exception as e:
         return f"DB Error: {str(e)}"
