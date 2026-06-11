@@ -12,15 +12,28 @@ db = client_mongo["sample_mflix"]
 def get_retail_data(query):
     try:
         collection = db["movies"]
-        sample = list(collection.find({}, {"_id": 0, "title": 1, "year": 1, "genres": 1}).limit(5))
-
-        if not sample:
-            return "No data found in MongoDB"
-
-        response = "🎬 Sample Data from MongoDB:\n\n"
-        for item in sample:
-            response += f"• {item.get('title','')} ({item.get('year','')}) - {', '.join(item.get('genres', []))}\n"
-        return response
+        q = query.lower()
+        
+        if "location" in q or "store" in q:
+            sample = list(collection.distinct("countries"))[:8]
+            return "🏪 Available Locations (from MongoDB Atlas):\n\n" + ", ".join(sample)
+        
+        elif "best" in q or "selling" in q or "popular" in q:
+            sample = list(collection.find({"imdb.rating": {"$gt": 8}}, {"_id": 0, "title": 1, "imdb": 1}).sort("imdb.rating", -1).limit(5))
+            response = "🛍️ Top Rated Products (live from MongoDB):\n\n"
+            for item in sample:
+                rating = item.get('imdb', {}).get('rating', 'N/A')
+                response += f"• {item.get('title','')} — Rating: {rating}\n"
+            return response
+        
+        else:
+            sample = list(collection.find({}, {"_id": 0, "title": 1, "year": 1, "genres": 1}).limit(5))
+            if not sample:
+                return "No data found in MongoDB"
+            response = "📦 Sample Inventory (live from MongoDB Atlas):\n\n"
+            for item in sample:
+                response += f"• {item.get('title','')} ({item.get('year','')}) - {', '.join(item.get('genres', []))}\n"
+            return response
     except Exception as e:
         return f"DB Error: {str(e)}"
 
